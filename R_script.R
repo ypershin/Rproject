@@ -110,8 +110,8 @@ where site_id in (<SITE_STRING>)
 # run queires in EECPRD
 
 dsn <- "EECPRD"
-userid <- as.character(dbAcc[dbAcc$DB=="eecprd",2])
-passw <- as.character(dbAcc[dbAcc$DB=="eecprd",3])
+userid <- as.character(dbAcc[dbAcc$DB==tolower(dsn),2])
+passw <- as.character(dbAcc[dbAcc$DB==tolower(dsn),3])
 conn <- odbcConnect(dsn,userid, passw, believeNRows=FALSE)
 # odbcGetInfo(conn)
 
@@ -217,12 +217,12 @@ odbcClose(conn)
 # run PMS query
 
 dsn <- "PMSPRD"
-userid <- as.character(dbAcc[dbAcc$DB=="pmsprd",2])
-passw <- as.character(dbAcc[dbAcc$DB=="pmsprd",3])
+userid <- as.character(dbAcc[dbAcc$DB==tolower(dsn),2])
+passw <- as.character(dbAcc[dbAcc$DB==tolower(dsn),3])
 
 #dsn <- "PMSTST"
-#userid <- as.character(dbAcc[dbAcc$DB=="pmstst",2])
-#passw <- as.character(dbAcc[dbAcc$DB=="pmstst",3])
+#userid <- as.character(dbAcc[dbAcc$DB==tolower(dsn),2])
+#passw <- as.character(dbAcc[dbAcc$DB==tolower(dsn),3])
 
 
 conn <- odbcConnect(dsn,userid, passw, believeNRows=FALSE)
