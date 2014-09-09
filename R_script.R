@@ -7,7 +7,7 @@ MAX_SITES = 350
 
 
 args <- commandArgs(trailingOnly = TRUE)
-# args <- c("110957","2014-07-22",7109,6171,7233,7048,7167,7232,8744,8246,7030,6412,5820,6501)
+# args <- c("114859","2014-09-09",1000,1000,1000,1000,1000,1000,1000,1000,1000,1000,1000,1000)
 
 if(length(args) < 14) {
    stop("not enough arguments!!!")
@@ -278,18 +278,27 @@ for(i in 1:n) {
 odbcClose(conn)
 
 setSs <- function(df, strType) {  
-  df[is.na(df)] <- 0
+  names(df) <- c("SITE_ID","MONTH","VOLUME")
+  df[is.na(df)] <- 0      
   df$TYPE <- strType
-  names(df) <- c("SITE_ID","MONTH","VOLUME","TYPE")
   return(df)
 }
 
 
 # actual metered volumes for this contract
-mvAct <- setSs(subset(mv,WSD_FLAG==1 & MONTHLY<ISOdate(td$year + 1900, td$mon, 1),select=c(SITE_ID,MONTHLY,VOLUME)),"actual")
 
 # actual metered volumes for sites (regardless of contract)
 mvAll <- setSs(subset(mv,TRUE,select=c(SITE_ID,MONTHLY,VOLUME)),"actualAC")
+
+# mvAct <- setSs(subset(mv,WSD_FLAG==1 & MONTHLY<ISOdate(td$year + 1900, td$mon, 1),select=c(SITE_ID,MONTHLY,VOLUME)),"actual")
+mvAct <- subset(mv,WSD_FLAG==1 & MONTHLY<ISOdate(td$year + 1900, td$mon, 1),select=c(SITE_ID,MONTHLY,VOLUME))
+
+if(nrow(mvAct)==0) {
+  mvAct <- subset(mvAll[1,],select=c(SITE_ID,MONTH,VOLUME))
+  mvAct$VOLUME = 0
+}
+mvAct <- setSs(mvAct,"actual")
+
 
 # historical volumes for sites (regardless of contract)
 cpAll <- setSs(subset(recs, !is.na(SRVC_NO), select = c(SRVC_NO,VOLUME_MONTH,HISTORICAL_VOLUME)),"allHist")
@@ -348,15 +357,19 @@ siteActive <- subset(sites, SITE_STATUS=='Active', select=c(SITE_ID))
 
 n = nrow(siteActive)
 for(i in 1:n) {  
+  
+  # metered volume for a specific site
   smv <- subset(mvOut,SITE_ID==siteActive[i,1])
+  
+  # contract volume for a specific site
   shv <- subset(cpOut,SITE_ID==siteActive[i,1])
   
   for(m in 15:25) {    
     if(nrow(smv)>0) {
-      if(smv[,m-12] != 0)
+      # if(smv[,m-12] != 0)
         actualBest[,m] = (actualBest[,m] + smv[,m-12])
-      else
-        actualBest[,m] = (actualBest[,m] + shv[,m])
+      # else
+        # actualBest[,m] = (actualBest[,m] + shv[,m])
     }
     else
       actualBest[,m] = (actualBest[,m] + shv[,m])    
