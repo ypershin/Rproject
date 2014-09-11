@@ -6,8 +6,8 @@ library("reshape", lib.loc="C:/Program Files/R/R-3.0.3/library")
 MAX_SITES = 350
 
 
-args <- commandArgs(trailingOnly = TRUE)
-# args <- c("114859","2014-09-09",1000,1000,1000,1000,1000,1000,1000,1000,1000,1000,1000,1000)
+# args <- commandArgs(trailingOnly = TRUE)
+args <- c("993689","2014-09-11",1000,1000,1000,1000,1000,1000,1000,1000,1000,1000,2000,1000)
 
 if(length(args) < 14) {
    stop("not enough arguments!!!")
@@ -297,6 +297,7 @@ if(nrow(mvAct)==0) {
   mvAct <- subset(mvAll[1,],select=c(SITE_ID,MONTH,VOLUME))
   mvAct$VOLUME = 0
 }
+
 mvAct <- setSs(mvAct,"actual")
 
 
@@ -315,6 +316,22 @@ hv <- setSs(subset(merge(recs,sitesOrig,by="SRVC_NO"), CONTRACT_NO==contractNumb
 
 # financial volume
 cf <- setSs(subset(recs, CONTRACT_NO==contractNumber, select = c(SRVC_NO,VOLUME_MONTH,CONTRACT_VOLUME)),"financial")
+
+cfOne <- cf[1,]
+cfOne$SITE_ID = 0
+cfOne$VOLUME = 0
+
+for(m in 1:12) {
+  
+  if((td$mon+m)<=12)
+    cfOne$MONTH = as.POSIXct(ISOdatetime(td$year + 1900, td$mon+m,1,0,0,0))
+  else
+    cfOne$MONTH = as.POSIXct(ISOdatetime(td$year + 1900+1, m-(12-td$mon),1,0,0,0))
+  
+  #print(cfOne$MONTH)
+  cf <- rbind(cf,cfOne)
+}
+
 
 # combine sets into tv set
 tv <- rbind(hv, cf)
@@ -356,15 +373,17 @@ actualBest$TYPE <- "actualBest"
 siteActive <- subset(sites, SITE_STATUS=='Active', select=c(SITE_ID))
 
 n = nrow(siteActive)
+
 for(i in 1:n) {  
   
   # metered volume for a specific site
   smv <- subset(mvOut,SITE_ID==siteActive[i,1])
   
   # contract volume for a specific site
-  shv <- subset(cpOut,SITE_ID==siteActive[i,1])
+  shv <- subset(cpOut,SITE_ID==siteActive[i,1])  
   
-  for(m in 15:25) {    
+  for(m in 15:25) {   
+      
     if(nrow(smv)>0) {
       # if(smv[,m-12] != 0)
         actualBest[,m] = (actualBest[,m] + smv[,m-12])
@@ -372,7 +391,7 @@ for(i in 1:n) {
         # actualBest[,m] = (actualBest[,m] + shv[,m])
     }
     else
-      actualBest[,m] = (actualBest[,m] + shv[,m])    
+        actualBest[,m] = (actualBest[,m] + shv[,m])    
   }
 }
 
